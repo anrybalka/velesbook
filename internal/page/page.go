@@ -38,7 +38,6 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 //	{
 //	    "title": "Название страницы",
 //	    "content": "Текст страницы",
-//	    "user_id": 1,
 //	    "parent_id": null
 //	}
 func сreatePage(db *gorm.DB) gin.HandlerFunc {
