@@ -1,6 +1,8 @@
 package page
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -44,7 +46,6 @@ func сreatePage(db *gorm.DB) gin.HandlerFunc {
 		var input struct {
 			Title    string `json:"title" binding:"required"`
 			Content  string `json:"content"`
-			UserID   uint   `json:"user_id" binding:"required"`
 			ParentID *uint  `json:"parent_id"` // Может быть nil, если родителя нет
 		}
 		// Парсим JSON-запрос
@@ -53,11 +54,29 @@ func сreatePage(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Получаем ID текущего пользователя из контекста
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неавторизованный пользователь"})
+			return
+		}
+
+		// Приводим userID к uint
+		userIDUint, ok := userID.(uint)
+		if !ok {
+			userIDFloat, ok := userID.(float64) // JWT может передавать числа как float64
+			if !ok {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка приведения userID"})
+				return
+			}
+			userIDUint = uint(userIDFloat)
+		}
+
 		// Создаем новую страницу
 		page := Page{
 			Title:    input.Title,
 			Content:  input.Content,
-			UserID:   input.UserID,
+			UserID:   userIDUint,
 			ParentID: input.ParentID, // Может быть nil, если родителя нет
 		}
 
@@ -67,9 +86,10 @@ func сreatePage(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		log.Printf("Создал страницу пользователь с ID: %v", userID)
 		// Возвращаем успешный ответ
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Страница успешно создана",
+			"message": fmt.Sprintf("Пользователь с ID %d создал страницу", userIDUint),
 			"page":    page,
 		})
 	}
@@ -86,7 +106,19 @@ func getAllPages(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Получаем ID текущего пользователя из контекста
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неавторизованный пользователь"})
+			return
+		}
+
+		log.Printf("Всех пользователей вывел пользователь с ID: %v", userID)
+
 		// Возвращаем список пользователей
-		c.JSON(http.StatusOK, gin.H{"pages": pages})
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Все страницы вывел пользователь с ID: %v", userID),
+			"pages":   pages,
+		})
 	}
 }

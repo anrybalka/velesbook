@@ -53,7 +53,6 @@ velesbook/
       "body": {
         "title": "Название страницы",
         "content": "Текст страницы",
-        "user_id": 1,
         "parent_id": null
       }
     }

@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +34,19 @@ func getAllUsers(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Получаем ID текущего пользователя из контекста
+		userID, exists := c.Get("userID")
+		if !exists {
+			userID = "неизвестный" // Если ID отсутствует
+		}
+
+		// Логируем действие
+		log.Printf("Всех пользователей вывел пользователь с ID: %v", userID)
+
 		// Возвращаем список пользователей
-		c.JSON(http.StatusOK, gin.H{"users": users})
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Всех пользователей вывел пользователь с ID: %v", userID),
+			"users":   users,
+		})
 	}
 }
