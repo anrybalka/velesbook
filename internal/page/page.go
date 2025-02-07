@@ -14,7 +14,7 @@ type Page struct {
 	Title     string    `json:"title" gorm:"not null"`
 	Content   string    `json:"content"`
 	UserID    uint      `json:"user_id"`   // Привязка к пользователю
-	ParentID  *uint     `json:"parent_id"` // Ссылка на родительскую страницу (если есть)
+	ParentID  *uint     `json:"parent_id"` // Используем указатель, чтобы поддерживать NULL
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
@@ -27,7 +27,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	page := router.Group("/pages")
 	{
 		page.GET("/", getAllPages(db))
-		page.POST("/create", addCreatePage(db))
+		page.POST("/create", сreatePage(db))
 	}
 }
 
@@ -39,13 +39,13 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 //	    "user_id": 1,
 //	    "parent_id": null
 //	}
-func addCreatePage(db *gorm.DB) gin.HandlerFunc {
+func сreatePage(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
 			Title    string `json:"title" binding:"required"`
 			Content  string `json:"content"`
 			UserID   uint   `json:"user_id" binding:"required"`
-			ParentID *uint  `json:"parent_id"`
+			ParentID *uint  `json:"parent_id"` // Может быть nil, если родителя нет
 		}
 		// Парсим JSON-запрос
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -58,7 +58,7 @@ func addCreatePage(db *gorm.DB) gin.HandlerFunc {
 			Title:    input.Title,
 			Content:  input.Content,
 			UserID:   input.UserID,
-			ParentID: input.ParentID,
+			ParentID: input.ParentID, // Может быть nil, если родителя нет
 		}
 
 		// Сохраняем страницу в базе данных
@@ -72,8 +72,6 @@ func addCreatePage(db *gorm.DB) gin.HandlerFunc {
 			"message": "Страница успешно создана",
 			"page":    page,
 		})
-
-		c.JSON(http.StatusOK, gin.H{"message": "Страница создана"})
 	}
 }
 

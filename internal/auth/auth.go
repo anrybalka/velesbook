@@ -21,12 +21,9 @@ type User struct {
 // Секретный ключ для подписи JWT (можно вынести в .env)
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
-func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
-	auth := router.Group("/auth")
-	{
-		auth.POST("/register", registerUser(db))
-		auth.POST("/login", loginUser(db))
-	}
+func RegisterRoutes(group *gin.RouterGroup, db *gorm.DB) {
+	group.POST("/register", registerUser(db))
+	group.POST("/login", loginUser(db))
 }
 
 // Генерация JWT-токена
