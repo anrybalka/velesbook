@@ -14,8 +14,7 @@ type User struct {
 	Password string `json:"password" gorm:"not null"`
 }
 
-// Функция регистрации нового пользователя
-func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
+func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	user := router.Group("/users")
 	{
 		user.GET("/", getAllUsers(db))

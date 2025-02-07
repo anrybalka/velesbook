@@ -2,8 +2,11 @@ package auth
 
 import (
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -15,12 +18,27 @@ type User struct {
 	Password string `json:"password,omitempty" gorm:"not null"`
 }
 
+// Секретный ключ для подписи JWT (можно вынести в .env)
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", registerUser(db))
 		auth.POST("/login", loginUser(db))
 	}
+}
+
+// Генерация JWT-токена
+func generateToken(userID uint, email string) (string, error) {
+	claims := jwt.MapClaims{
+		"id":    userID,
+		"email": email,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(), // Токен действителен 24 часа
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }
 
 // POST /auth/register
@@ -61,11 +79,22 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Возвращаем успешный ответ без пароля
-		c.JSON(http.StatusOK, gin.H{"message": "Пользователь успешно зарегистрирован", "user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		}})
+		// Генерируем JWT-токен
+		token, err := generateToken(user.ID, user.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при создании токена"})
+			return
+		}
+
+		// Возвращаем успешный ответ
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Пользователь успешно зарегистрирован",
+			"user": gin.H{
+				"id":    user.ID,
+				"email": user.Email,
+			},
+			"token": token,
+		})
 	}
 }
 
@@ -101,10 +130,22 @@ func loginUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Успешный вход (здесь можно добавить JWT-токен в будущем)
-		c.JSON(http.StatusOK, gin.H{"message": "Вход выполнен успешно", "user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		}})
+		// Генерируем JWT-токен
+		token, err := generateToken(user.ID, user.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при создании токена"})
+			return
+		}
+
+		// Возвращаем успешный ответ
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Вход выполнен успешно",
+			"user": gin.H{
+				"id":    user.ID,
+				"email": user.Email,
+			},
+			"token": token,
+		})
+
 	}
 }

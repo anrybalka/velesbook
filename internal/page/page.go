@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
+func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	page := router.Group("/pages")
 	{
 		page.GET("/", getAllPages(db))
