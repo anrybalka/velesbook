@@ -36,22 +36,17 @@ velesbook/
         "password": "securepassword"
       }
     },
-    "AuthMiddleware": {
+    "GET /api/users": {
       "headers": {
         "Authorization": "Bearer <token>"
       }
     },
-    "GET /users": {
+    "GET /api/pages": {
       "headers": {
         "Authorization": "Bearer <token>"
       }
     },
-    "GET /pages": {
-      "headers": {
-        "Authorization": "Bearer <token>"
-      }
-    },
-    "POST /pages/create": {
+    "POST /api/pages/create": {
       "headers": {
         "Authorization": "Bearer <token>"
       },
