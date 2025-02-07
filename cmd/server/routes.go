@@ -16,7 +16,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 
 	// Группа защищенных маршрутов (требует токен)
 	api := router.Group("/api")
-	api.Use(auth.AuthMiddleware()) // Добавляем middleware
+	api.Use(auth.AuthMiddleware()) // Добавляем middlewar
 	user.RegisterRoutes(api, db)   // Маршруты для работы с пользователями
 	page.RegisterRoutes(api, db)   // Маршруты для страниц
 }
