@@ -21,6 +21,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	}
 }
 
+// GET /users
 func getAllUsers(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var users []User

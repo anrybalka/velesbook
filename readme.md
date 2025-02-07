@@ -1,3 +1,4 @@
+## velesbok
 Учебное веб-приложение, в перспективе с заметками
 ```md
 velesbook/
@@ -17,4 +18,50 @@ velesbook/
 │── main.go            # Главная точка входа
 │── go.mod             # Файл модулей
 │── Dockerfile         # Контейнеризация
+```
+
+
+```json
+{
+  "endpoints": {
+    "POST /auth/register": {
+      "body": {
+        "email": "user@example.com",
+        "password": "securepassword"
+      }
+    },
+    "POST /auth/login": {
+      "body": {
+        "email": "user@example.com",
+        "password": "securepassword"
+      }
+    },
+    "AuthMiddleware": {
+      "headers": {
+        "Authorization": "Bearer <token>"
+      }
+    },
+    "GET /users": {
+      "headers": {
+        "Authorization": "Bearer <token>"
+      }
+    },
+    "GET /pages": {
+      "headers": {
+        "Authorization": "Bearer <token>"
+      }
+    },
+    "POST /pages/create": {
+      "headers": {
+        "Authorization": "Bearer <token>"
+      },
+      "body": {
+        "title": "Название страницы",
+        "content": "Текст страницы",
+        "user_id": 1,
+        "parent_id": null
+      }
+    }
+  }
+}
 ```

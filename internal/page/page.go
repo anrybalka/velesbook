@@ -31,7 +31,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	}
 }
 
-// POST /page/create
+// POST /pages/create
 //
 //	{
 //	    "title": "Название страницы",
@@ -77,6 +77,7 @@ func addCreatePage(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// GET /pages
 func getAllPages(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pages []Page
