@@ -10,8 +10,12 @@ import (
 )
 
 func SetupRoutes(router *gin.Engine, db *gorm.DB) {
-	// Группируем маршруты
+	// Маршруты для аутентификации (без защиты)
 	auth.RegisterRoutes(router, db) // Маршруты для аутентификации
-	user.RegisterRoutes(router, db) // Маршруты для работы с пользователями
-	page.RegisterRoutes(router, db) // Маршруты для страниц
+
+	// Группа защищенных маршрутов (требует токен)
+	protected := router.Group("/")
+	protected.Use(auth.AuthMiddleware()) // Добавляем middleware
+	user.RegisterRoutes(protected, db)   // Маршруты для работы с пользователями
+	page.RegisterRoutes(protected, db)   // Маршруты для страниц
 }

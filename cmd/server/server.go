@@ -20,7 +20,7 @@ func Run(db *gorm.DB, port string) {
 	protected := router.Group("/")
 	protected.Use(auth.AuthMiddleware())
 
-	// Подключаем защищенные маршруты
+	// Подключаем защищенные маршруты (передаем protected, который является *gin.RouterGroup)
 	user.RegisterRoutes(protected, db)
 	page.RegisterRoutes(protected, db)
 
