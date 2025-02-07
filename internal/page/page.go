@@ -27,11 +27,67 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	page := router.Group("/pages")
 	{
 		page.GET("/", getAllPages(db))
+		page.POST("/create", addCreatePage(db))
+	}
+}
+
+// POST /page/create
+//
+//	{
+//	    "title": "Название страницы",
+//	    "content": "Текст страницы",
+//	    "user_id": 1,
+//	    "parent_id": null
+//	}
+func addCreatePage(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input struct {
+			Title    string `json:"title" binding:"required"`
+			Content  string `json:"content"`
+			UserID   uint   `json:"user_id" binding:"required"`
+			ParentID *uint  `json:"parent_id"`
+		}
+		// Парсим JSON-запрос
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
+			return
+		}
+
+		// Создаем новую страницу
+		page := Page{
+			Title:    input.Title,
+			Content:  input.Content,
+			UserID:   input.UserID,
+			ParentID: input.ParentID,
+		}
+
+		// Сохраняем страницу в базе данных
+		if err := db.Create(&page).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать страницу"})
+			return
+		}
+
+		// Возвращаем успешный ответ
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Страница успешно создана",
+			"page":    page,
+		})
+
+		c.JSON(http.StatusOK, gin.H{"message": "Страница создана"})
 	}
 }
 
 func getAllPages(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Список страниц"})
+		var pages []Page
+
+		// Получаем всех пользователей из базы
+		if err := db.Find(&pages).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список пользователей"})
+			return
+		}
+
+		// Возвращаем список пользователей
+		c.JSON(http.StatusOK, gin.H{"pages": pages})
 	}
 }
