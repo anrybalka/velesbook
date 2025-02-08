@@ -58,8 +58,15 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Проверяем, существует ли уже пользователь с таким email
+
 		var existingUser User
-		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", user.Email).Scan(&existingUser.ID, &existingUser.Email, &existingUser.Password)
+		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", user.Email).
+			Scan(&existingUser.ID, &existingUser.Email, &existingUser.Password)
+		if err != nil && err != sql.ErrNoRows {
+			log.Printf("❌ auth.registerUser.db.QueryRow: Ошибка базы данных: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
+			return
+		}
 		if err == nil {
 			log.Printf("❌ auth.registerUser.db.QueryRow: Пользователь с таким email уже существует: %v", user.Email)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь с таким email уже существует"})
@@ -75,9 +82,11 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Сохраняем пользователя в базе данных
-		_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, string(hashedPassword))
+		var userID uint
+		err = db.QueryRow("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id",
+			user.Email, string(hashedPassword)).Scan(&userID)
 		if err != nil {
-			log.Printf("❌ auth.registerUser.db.Exec: Не удалось сохранить пользователя: %v", err.Error())
+			log.Printf("❌ auth.registerUser.db.QueryRow: Не удалось сохранить пользователя: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось сохранить пользователя"})
 			return
 		}

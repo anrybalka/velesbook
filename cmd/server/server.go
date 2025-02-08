@@ -9,11 +9,14 @@ import (
 
 func Run(db *sql.DB, port string) {
 	router := gin.Default()
-
+	if port == "" {
+		log.Fatal("Ошибка: не задан порт сервера")
+	}
 	// Настройка маршрутов через отдельную функцию в routes.go
 	SetupRoutes(router, db)
 
 	log.Println("Сервер запущен на порту", port)
+
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Ошибка при запуске сервера: %v", err)
 	}

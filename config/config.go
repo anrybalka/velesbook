@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 )
 
@@ -11,6 +12,12 @@ type Config struct {
 }
 
 func LoadConfig() Config {
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("Ошибка: переменная окружения JWT_SECRET не установлена")
+	}
+
 	return Config{
 		ServerPort:  getEnv("SERVER_PORT", "8080"),
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:9591@localhost:5432/velesbook?sslmode=disable"),
