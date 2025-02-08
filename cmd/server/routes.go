@@ -10,12 +10,16 @@ import (
 )
 
 func SetupRoutes(router *gin.Engine, db *gorm.DB) {
-	// Группа для аутентификации (без защиты)
-	authGroup := router.Group("/auth")
-	auth.RegisterRoutes(authGroup, db) // Теперь маршруты аутентификации в /auth
+
+	// Группа для версии v1
+	v1 := router.Group("/v1")
+
+	// Группа аутентификации (без middleware)
+	authGroup := v1.Group("/auth")
+	auth.RegisterRoutes(authGroup, db) // /v1/auth
 
 	// Группа защищенных маршрутов (требует токен)
-	api := router.Group("/api")
+	api := v1.Group("/api")
 	api.Use(auth.AuthMiddleware()) // Добавляем middlewar
 	user.RegisterRoutes(api, db)   // Маршруты для работы с пользователями
 	page.RegisterRoutes(api, db)   // Маршруты для страниц

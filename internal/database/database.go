@@ -1,16 +1,24 @@
 package database
 
 import (
+	"database/sql"
 	"log"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+
+	_ "github.com/lib/pg"
 )
 
-func InitDB(databaseURL string) *gorm.DB {
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+// InitDB инициализирует подключение к базе данных PostgreSQL
+func InitDB(databaseURL string) *sql.DB {
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
-		log.Fatal("Ошибка подключения к базе данных:", err)
+		log.Fatal("❌ Ошибка подключения к базе данных:", err)
 	}
-	log.Println("База данных подключена")
+
+	// Проверяем соединение
+	if err = db.Ping(); err != nil {
+		log.Fatal("❌ База данных недоступна:", err)
+	}
+
+	log.Println("✅ База данных подключена")
 	return db
 }

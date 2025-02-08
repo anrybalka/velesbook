@@ -1,22 +1,23 @@
 package user
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"velesbook/pkg"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // Структура пользователя
 type User struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
-	Email    string `json:"email" gorm:"unique;not null"`
-	Password string `json:"password" gorm:"not null"`
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
+func RegisterRoutes(router *gin.RouterGroup, db *sql.DB) {
 	user := router.Group("/users")
 	{
 		user.GET("/", getAllUsers(db))
@@ -24,28 +25,47 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 }
 
 // GET /users
-func getAllUsers(db *gorm.DB) gin.HandlerFunc {
+func getAllUsers(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var users []User
 
-		// Получаем всех пользователей из базы
-		if err := db.Find(&users).Error; err != nil {
+		// Запрос для получения всех пользователей из базы
+		rows, err := db.Query("SELECT id, email, password FROM users")
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список пользователей"})
 			return
 		}
+		defer rows.Close()
 
-		// Получаем ID текущего пользователя из контекста
-		userID, exists := c.Get("userID")
-		if !exists {
-			userID = "неизвестный" // Если ID отсутствует
+		// Чтение всех пользователей из результата запроса
+		for rows.Next() {
+			var user User
+			if err := rows.Scan(&user.ID, &user.Email, &user.Password); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при чтении данных пользователей"})
+				return
+			}
+			users = append(users, user)
+		}
+
+		// Проверка на наличие ошибок после чтения строк
+		if err := rows.Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обработке данных пользователей"})
+			return
+		}
+
+		// Получаем userID через функцию
+		userIDUint, err := pkg.GetUserID(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
 		}
 
 		// Логируем действие
-		log.Printf("Всех пользователей вывел пользователь с ID: %v", userID)
+		log.Printf("Всех пользователей вывел пользователь с ID: %v", userIDUint)
 
 		// Возвращаем список пользователей
 		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Всех пользователей вывел пользователь с ID: %v", userID),
+			"message": fmt.Sprintf("Всех пользователей вывел пользователь с ID: %v", userIDUint),
 			"users":   users,
 		})
 	}

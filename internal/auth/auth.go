@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"database/sql"
 	"net/http"
 	"os"
 	"time"
@@ -8,20 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 // Структура пользователя
 type User struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
-	Email    string `json:"email" gorm:"unique;not null"`
-	Password string `json:"password,omitempty" gorm:"not null"`
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Password string `json:"password,omitempty"`
 }
 
 // Секретный ключ для подписи JWT (можно вынести в .env)
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
-func RegisterRoutes(group *gin.RouterGroup, db *gorm.DB) {
+func RegisterRoutes(group *gin.RouterGroup, db *sql.DB) {
 	group.POST("/register", registerUser(db))
 	group.POST("/login", loginUser(db))
 }
@@ -44,7 +44,7 @@ func generateToken(userID uint, email string) (string, error) {
 //	  "email": "user@example.com",
 //	  "password": "securepassword"
 //	}
-func registerUser(db *gorm.DB) gin.HandlerFunc {
+func registerUser(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var user User
@@ -57,7 +57,8 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 
 		// Проверяем, существует ли уже пользователь с таким email
 		var existingUser User
-		if err := db.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", user.Email).Scan(&existingUser.ID, &existingUser.Email, &existingUser.Password)
+		if err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь с таким email уже существует"})
 			return
 		}
@@ -70,8 +71,8 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Сохраняем пользователя в базе данных
-		user.Password = string(hashedPassword)
-		if err := db.Create(&user).Error; err != nil {
+		_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, string(hashedPassword))
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось сохранить пользователя"})
 			return
 		}
@@ -101,7 +102,7 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 //	  "email": "user@example.com",
 //	  "password": "securepassword"
 //	}
-func loginUser(db *gorm.DB) gin.HandlerFunc {
+func loginUser(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest struct {
 			Email    string `json:"email"`
@@ -116,7 +117,8 @@ func loginUser(db *gorm.DB) gin.HandlerFunc {
 
 		// Ищем пользователя в базе по email
 		var user User
-		if err := db.Where("email = ?", loginRequest.Email).First(&user).Error; err != nil {
+		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", loginRequest.Email).Scan(&user.ID, &user.Email, &user.Password)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
 			return
 		}

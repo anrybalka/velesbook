@@ -24,29 +24,29 @@ velesbook/
 ```json
 {
   "endpoints": {
-    "POST /auth/register": {
+    "POST /v1/auth/register": {
       "body": {
         "email": "user@example.com",
         "password": "securepassword"
       }
     },
-    "POST /auth/login": {
+    "POST /v1/auth/login": {
       "body": {
         "email": "user@example.com",
         "password": "securepassword"
       }
     },
-    "GET /api/users": {
+    "GET /v1/api/users": {
       "headers": {
         "Authorization": "Bearer <token>"
       }
     },
-    "GET /api/pages": {
+    "GET /v1/api/pages": {
       "headers": {
         "Authorization": "Bearer <token>"
       }
     },
-    "POST /api/pages/create": {
+    "POST /v1/api/pages/create": {
       "headers": {
         "Authorization": "Bearer <token>"
       },
