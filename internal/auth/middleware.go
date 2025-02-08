@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -16,6 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Проверяем, передан ли токен и его формат (Bearer token)
 		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
+			log.Printf("❌ auth.AuthMiddleware: Токен отсутствует или некорректен")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Токен отсутствует или некорректен"})
 			c.Abort()
 			return
@@ -31,6 +33,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
+			log.Printf("❌ auth.AuthMiddleware.token.Valid: Неверный токен: %v", err.Error())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный токен"})
 			c.Abort()
 			return

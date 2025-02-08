@@ -45,8 +45,6 @@ func getMyPages(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("🔍 Получаем страницы для userID: %d", userIDUint)
-
 		// Запрос для получения страниц текущего пользователя
 		rows, err := db.Query("SELECT id, title, content, user_id, parent_id, created_at, updated_at FROM pages WHERE user_id = $1", userIDUint)
 		if err != nil {
@@ -69,7 +67,7 @@ func getMyPages(db *sql.DB) gin.HandlerFunc {
 
 		// Проверка на ошибки при чтении строк
 		if err := rows.Err(); err != nil {
-			log.Printf("❌ page.getMyPages.rows.Err при обработке данных страниц: error: %v", err.Error())
+			log.Printf("❌ page.getMyPages.rows.Err при обработке данных страниц: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обработке данных страниц"})
 			return
 		}
@@ -99,7 +97,7 @@ func сreatePage(db *sql.DB) gin.HandlerFunc {
 		}
 		// Парсим JSON-запрос
 		if err := c.ShouldBindJSON(&input); err != nil {
-			log.Printf("❌ page.сreatePage.ShouldBindJSON: error: Неверный формат данных")
+			log.Printf("❌ page.сreatePage.ShouldBindJSON: Неверный формат данных: %v", err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
 			return
 		}
@@ -117,7 +115,7 @@ func сreatePage(db *sql.DB) gin.HandlerFunc {
 		err = db.QueryRow("INSERT INTO pages (title, content, user_id, parent_id) VALUES ($1, $2, $3, $4) RETURNING id",
 			input.Title, input.Content, userIDUint, input.ParentID).Scan(&pageID)
 		if err != nil {
-			log.Printf("❌ page.сreatePage.QueryRow: error: %v", err.Error())
+			log.Printf("❌ page.сreatePage.db.QueryRow: error: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать страницу"})
 			return
 		}
@@ -148,7 +146,7 @@ func getAllPages(db *sql.DB) gin.HandlerFunc {
 		// Запрос для получения всех страниц
 		rows, err := db.Query("SELECT id, title, content, user_id, parent_id, created_at, updated_at FROM pages")
 		if err != nil {
-			log.Printf("❌ page.getAllPages.db.Query: error: Не удалось получить список страниц")
+			log.Printf("❌ page.getAllPages.db.Query: error: Не удалось получить список страниц: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список страниц"})
 			return
 		}
@@ -158,6 +156,7 @@ func getAllPages(db *sql.DB) gin.HandlerFunc {
 		for rows.Next() {
 			var page Page
 			if err := rows.Scan(&page.ID, &page.Title, &page.Content, &page.UserID, &page.ParentID, &page.CreatedAt, &page.UpdatedAt); err != nil {
+				log.Printf("❌ page.getAllPages.rows.Scan: Ошибка при чтении данных страниц: %v", err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при чтении данных страниц"})
 				return
 			}
@@ -165,7 +164,7 @@ func getAllPages(db *sql.DB) gin.HandlerFunc {
 		}
 		// Проверка на ошибки при чтении строк
 		if err := rows.Err(); err != nil {
-			log.Printf("❌ page.getAllPages.rows.Err(): error: %v", err.Error())
+			log.Printf("❌ page.getAllPages.rows.Err(): %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обработке данных страниц"})
 			return
 		}
@@ -173,13 +172,12 @@ func getAllPages(db *sql.DB) gin.HandlerFunc {
 		// Получаем userID через функцию
 		userIDUint, err := pkg.GetUserID(c)
 		if err != nil {
-			log.Printf("❌ page.getAllPages.GetUserID: error: %v", err.Error())
+			log.Printf("❌ page.getAllPages.GetUserID: %v", err.Error())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
 		log.Printf("✅ Все страницы вывел пользователь с ID: %v", userIDUint)
-
 		// Возвращаем список страниц
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Все страницы вывел пользователь с ID: %v", userIDUint),
