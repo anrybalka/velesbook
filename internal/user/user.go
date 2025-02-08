@@ -12,9 +12,8 @@ import (
 
 // Структура пользователя
 type User struct {
-	ID       uint   `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID    uint   `json:"id"`
+	Email string `json:"email"`
 }
 
 func RegisterRoutes(router *gin.RouterGroup, db *sql.DB) {
@@ -30,7 +29,7 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 		var users []User
 
 		// Запрос для получения всех пользователей из базы
-		rows, err := db.Query("SELECT id, email, password FROM users")
+		rows, err := db.Query("SELECT id, email FROM users")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список пользователей"})
 			return
@@ -40,7 +39,7 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 		// Чтение всех пользователей из результата запроса
 		for rows.Next() {
 			var user User
-			if err := rows.Scan(&user.ID, &user.Email, &user.Password); err != nil {
+			if err := rows.Scan(&user.ID, &user.Email); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при чтении данных пользователей"})
 				return
 			}
