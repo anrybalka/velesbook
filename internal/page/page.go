@@ -48,9 +48,9 @@ func getMyPages(db *sql.DB) gin.HandlerFunc {
 		log.Printf("🔍 Получаем страницы для userID: %d", userIDUint)
 
 		// Запрос для получения страниц текущего пользователя
-		rows, err := db.Query("SELECT id, title, content, user_id, parent_id, created_at, updated_at FROM pages WHERE user_id = ?", userIDUint)
+		rows, err := db.Query("SELECT id, title, content, user_id, parent_id, created_at, updated_at FROM pages WHERE user_id = $1", userIDUint)
 		if err != nil {
-			log.Printf("Ошибка: %v", err)
+			log.Printf("Ошибка выполнения запроса: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список страниц текущего пользователя"})
 			return
 		}
@@ -110,17 +110,14 @@ func сreatePage(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Запрос для создания страницы
-		result, err := db.Exec("INSERT INTO pages (title, content, user_id, parent_id) VALUES (?, ?, ?, ?)", input.Title, input.Content, userIDUint, input.ParentID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать страницу"})
-			return
-		}
+		// Запрос к БД
+		var pageID uint
+		err = db.QueryRow("INSERT INTO pages (title, content, user_id, parent_id) VALUES ($1, $2, $3, $4) RETURNING id",
+			input.Title, input.Content, userIDUint, input.ParentID).Scan(&pageID)
 
-		// Получаем ID новой страницы
-		pageID, err := result.LastInsertId()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить ID созданной страницы"})
+			log.Printf("Ошибка создания страницы: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать страницу"})
 			return
 		}
 
@@ -132,8 +129,8 @@ func сreatePage(db *sql.DB) gin.HandlerFunc {
 			UserID:   userIDUint,
 			ParentID: input.ParentID, // Может быть nil, если родителя нет
 		}
+		log.Printf("✅ Создана страница ID %d пользователем ID %d", pageID, userIDUint)
 
-		log.Printf("Создал страницу пользователь с ID: %v", userIDUint)
 		// Возвращаем успешный ответ
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Пользователь с ID %d создал страницу", userIDUint),
