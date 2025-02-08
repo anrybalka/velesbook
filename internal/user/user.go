@@ -31,6 +31,7 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 		// Запрос для получения всех пользователей из базы
 		rows, err := db.Query("SELECT id, email FROM users")
 		if err != nil {
+			log.Printf("❌ user.getAllUsers.db.Query error: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить список пользователей"})
 			return
 		}
@@ -40,6 +41,7 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 		for rows.Next() {
 			var user User
 			if err := rows.Scan(&user.ID, &user.Email); err != nil {
+				log.Printf("❌ user.getAllUsers.rows.Next error: %v", err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при чтении данных пользователей"})
 				return
 			}
@@ -48,6 +50,7 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 
 		// Проверка на наличие ошибок после чтения строк
 		if err := rows.Err(); err != nil {
+			log.Printf("❌ user.getAllUsers.rows.Err error: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обработке данных пользователей"})
 			return
 		}
@@ -55,13 +58,13 @@ func getAllUsers(db *sql.DB) gin.HandlerFunc {
 		// Получаем userID через функцию
 		userIDUint, err := pkg.GetUserID(c)
 		if err != nil {
+			log.Printf("❌ user.getAllUsers.GetUserID error: %v", err.Error())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
 		// Логируем действие
-		log.Printf("Всех пользователей вывел пользователь с ID: %v", userIDUint)
-
+		log.Printf("✅ Всех пользователей вывел пользователь с ID: %v", userIDUint)
 		// Возвращаем список пользователей
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Всех пользователей вывел пользователь с ID: %v", userIDUint),

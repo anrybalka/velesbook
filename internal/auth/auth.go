@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -51,6 +52,7 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 
 		// Парсим JSON-запрос в структуру пользователя
 		if err := c.ShouldBindJSON(&user); err != nil {
+			log.Printf("❌ auth.registerUser: Неверный формат данных")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
 			return
 		}
@@ -59,6 +61,7 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		var existingUser User
 		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", user.Email).Scan(&existingUser.ID, &existingUser.Email, &existingUser.Password)
 		if err == nil {
+			log.Printf("❌ auth.registerUser: Пользователь с таким email уже существует: %v", user.Email)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь с таким email уже существует"})
 			return
 		}
@@ -66,6 +69,7 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		// Хэшируем пароль
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if err != nil {
+			log.Printf("❌ auth.registerUser: Ошибка при хэшировании пароля: %v", user.Password)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при хэшировании пароля"})
 			return
 		}
@@ -73,6 +77,7 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		// Сохраняем пользователя в базе данных
 		_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, string(hashedPassword))
 		if err != nil {
+			log.Printf("❌ auth.registerUser: Не удалось сохранить пользователя: %v", user.Email)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось сохранить пользователя"})
 			return
 		}
@@ -80,10 +85,12 @@ func registerUser(db *sql.DB) gin.HandlerFunc {
 		// Генерируем JWT-токен
 		token, err := generateToken(user.ID, user.Email)
 		if err != nil {
+			log.Printf("❌ auth.registerUser: Ошибка при создании токена")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при создании токена"})
 			return
 		}
 
+		log.Printf("✅ Регистрация пользователя с ID: %v", user.ID)
 		// Возвращаем успешный ответ
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Пользователь успешно зарегистрирован",
@@ -111,6 +118,7 @@ func loginUser(db *sql.DB) gin.HandlerFunc {
 
 		// Парсим JSON-запрос
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
+			log.Printf("❌ auth.loginUser: Неверный формат данных")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
 			return
 		}
@@ -119,12 +127,14 @@ func loginUser(db *sql.DB) gin.HandlerFunc {
 		var user User
 		err := db.QueryRow("SELECT id, email, password FROM users WHERE email = $1", loginRequest.Email).Scan(&user.ID, &user.Email, &user.Password)
 		if err != nil {
+			log.Printf("❌ auth.loginUser: Неверный пароль: %v", loginRequest.Email)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
 			return
 		}
 
 		// Проверяем пароль
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password)); err != nil {
+			log.Printf("❌ auth.loginUser: Неверный пароль: %v", loginRequest.Password)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
 			return
 		}
@@ -132,10 +142,12 @@ func loginUser(db *sql.DB) gin.HandlerFunc {
 		// Генерируем JWT-токен
 		token, err := generateToken(user.ID, user.Email)
 		if err != nil {
+			log.Printf("❌ auth.loginUser: Ошибка при создании токена")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при создании токена"})
 			return
 		}
 
+		log.Printf("✅ Авторизация пользователя с ID: %v", user.ID)
 		// Возвращаем успешный ответ
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Вход выполнен успешно",
