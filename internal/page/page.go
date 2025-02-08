@@ -27,7 +27,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *sql.DB) {
 	{
 		page.GET("/", getAllPages(db))
 		page.GET("/my", getMyPages(db))
-		page.POST("/create", сreatePage(db))
+		page.POST("/create", createPage(db))
 		// DELETE /delete/{id} // удалить страницу с id
 		// GET /{id} // получить страницу с id
 	}
@@ -88,7 +88,7 @@ func getMyPages(db *sql.DB) gin.HandlerFunc {
 //	    "content": "Текст страницы",
 //	    "parent_id": null
 //	}
-func сreatePage(db *sql.DB) gin.HandlerFunc {
+func createPage(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
 			Title    string `json:"title" binding:"required"`

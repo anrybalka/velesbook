@@ -18,11 +18,20 @@ func LoadConfig() Config {
 		log.Fatal("Ошибка: переменная окружения JWT_SECRET не установлена")
 	}
 
-	return Config{
+	config := Config{
 		ServerPort:  getEnv("SERVER_PORT", "8080"),
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:9591@localhost:5432/velesbook?sslmode=disable"),
-		JWTSecret:   getEnv("JWT_SECRET", "velesbook2025"),
+		JWTSecret:   jwtSecret,
 	}
+
+	// Логируем конфигурацию (JWTSecret скрыт для безопасности)
+	log.Printf("Конфигурация загружена: \n"+
+		"  - SERVER_PORT: %s\n"+
+		"  - DATABASE_URL: %s\n"+
+		"  - JWT_SECRET: %s\n",
+		config.ServerPort, config.DatabaseURL, config.JWTSecret)
+
+	return config
 }
 
 func getEnv(key, fallback string) string {
