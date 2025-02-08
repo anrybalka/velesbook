@@ -1,0 +1,4 @@
+
+docker network connect velesbook_my_network my-postgres
+docker network connect velesbook_my_network velesbook
+docker run -d --name velesbook -e SERVER_PORT=8080 -e DATABASE_URL=postgres://postgres:9591@my-postgres:5432/velesbook?sslmode=disable -e JWT_SECRET=velesbook2025 -p 8080:8080 velesbook:latest
