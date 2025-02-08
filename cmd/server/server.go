@@ -1,13 +1,13 @@
 package server
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func Run(db *gorm.DB, port string) {
+func Run(db *sql.DB, port string) {
 	router := gin.Default()
 
 	// Настройка маршрутов через отдельную функцию в routes.go

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/lib/pg"
+	_ "github.com/lib/pq"
 )
 
 // InitDB инициализирует подключение к базе данных PostgreSQL

@@ -1,15 +1,15 @@
 package server
 
 import (
+	"database/sql"
 	"velesbook/internal/auth"
 	"velesbook/internal/page"
 	"velesbook/internal/user"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func SetupRoutes(router *gin.Engine, db *gorm.DB) {
+func SetupRoutes(router *gin.Engine, db *sql.DB) {
 
 	// Группа для версии v1
 	v1 := router.Group("/v1")

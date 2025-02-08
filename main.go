@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
+	"velesbook/cmd/server"
 	"velesbook/config"
 	"velesbook/internal/database"
-	"velesbook/cmd/server"
 )
 
 func main() {
